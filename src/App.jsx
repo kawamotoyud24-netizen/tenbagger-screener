@@ -5,8 +5,16 @@ import { useState } from 'react'
 async function fmpFetch(path) {
   const url = `/api/fmp?path=${encodeURIComponent(path)}`
   const res = await fetch(url)
-  if (!res.ok) throw new Error(`API error: ${res.status}`)
-  return res.json()
+  let body
+  try { body = await res.json() } catch { body = null }
+
+  if (!res.ok) {
+    const detail = body
+      ? `${body.error ?? ''} ${body.fmpStatus ? `(FMP status: ${body.fmpStatus})` : ''} ${body.message ?? ''} ${body.snippet ?? ''} ${body.detail ? JSON.stringify(body.detail) : ''}`.trim()
+      : `HTTP ${res.status}`
+    throw new Error(detail || `API error: ${res.status}`)
+  }
+  return body
 }
 
 const CRITERIA = [
